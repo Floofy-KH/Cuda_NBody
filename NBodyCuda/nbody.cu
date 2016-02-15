@@ -33,6 +33,7 @@ struct planet {
 template <typename T>
 void advance(int nbodies, planet<T> *bodies)
 {
+  //Timer::start("advance");
   int i, j;
 
   for (i = 0; i < nbodies; ++i) {
@@ -58,11 +59,13 @@ void advance(int nbodies, planet<T> *bodies)
     b.y += b.vy;
     b.z += b.vz;
   }
+  //Timer::end("advance");
 }
 
 template <typename T>
 T energy(int nbodies, planet<T> *bodies)
 {
+  Timer timer; timer.start("energy");
   T e = 0.0;
   for (int i = 0; i < nbodies; ++i) {
     planet<T> &b = bodies[i];
@@ -76,11 +79,13 @@ T energy(int nbodies, planet<T> *bodies)
       e -= (b.mass * b2.mass) / distance;
     }
   }
+  timer.end();
   return e;
 }
 template <typename T>
 void offset_momentum(int nbodies, planet<T> *bodies)
 {
+  Timer timer; timer.start("offset_momentum");
   T px = 0.0, py = 0.0, pz = 0.0;
   for (int i = 0; i < nbodies; ++i) {
     px += bodies[i].vx * bodies[i].mass;
@@ -90,6 +95,7 @@ void offset_momentum(int nbodies, planet<T> *bodies)
   bodies[0].vx = - px / solar_mass;
   bodies[0].vy = - py / solar_mass;
   bodies[0].vz = - pz / solar_mass;
+  timer.end();
 }
 
 struct planet<type> golden_bodies[5] = {
@@ -146,17 +152,20 @@ const type RECIP_DT{1.0/DT};
 template <typename T>
 void scale_bodies(int nbodies, planet<T> *bodies, T scale)
 {
+  Timer timer; timer.start("scale_bodies");
   for (int i = 0; i < nbodies; ++i) {
     bodies[i].mass *= scale*scale;
     bodies[i].vx   *= scale;
     bodies[i].vy   *= scale;
     bodies[i].vz   *= scale;
   }
+  timer.end();
 }
 
 template <typename T>
 void init_random_bodies(int nbodies, planet<T> *bodies)
 {
+  Timer timer; timer.start("init_random_bodies");
   for (int i = 0; i < nbodies; ++i) {
     bodies[i].x    =  (T)rand()/RAND_MAX;
     bodies[i].y    =  (T)rand()/RAND_MAX;
@@ -166,6 +175,7 @@ void init_random_bodies(int nbodies, planet<T> *bodies)
     bodies[i].vz   =  (T)rand()/RAND_MAX;
     bodies[i].mass =  (T)rand()/RAND_MAX;
   }
+  timer.end();
 }
 
 int main(int argc, char ** argv)
@@ -184,20 +194,22 @@ int main(int argc, char ** argv)
     init_random_bodies(nbodies, bodies);
   }
 
-  Timer::start("Main");
+  Timer timerMain; timerMain.start("Main");
   offset_momentum(nbodies, bodies);
   type e1 = energy(nbodies, bodies);
   scale_bodies(nbodies, bodies, DT);
+  Timer timerAdvance; timerAdvance.start("arch_advance");
   for (int i = 1; i <= niters; ++i)  {
     advance(nbodies, bodies);
   }
+  timerAdvance.end();
   scale_bodies(nbodies, bodies, RECIP_DT);
 
   type e2 = energy(nbodies, bodies);
 
   std::cout << std::setprecision(9);
   std::cout << e1 << '\n' << e2 << '\n';
-  Timer::end("Main");
+  timerMain.end();
 
   if (argc != 1) { delete [] bodies; }
   return 0;

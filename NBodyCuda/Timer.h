@@ -1,22 +1,21 @@
 #pragma once
 
-#include <map>
 #include <chrono>
 #include <iostream>
 
 class Timer
 {
 private:
-  typedef std::map<std::string, std::chrono::system_clock::time_point> TimeMap;
-  static TimeMap startTimeMap;
+  std::chrono::system_clock::time_point m_start;
+  std::string m_message;
 
-  Timer()
+public:
+  Timer() : m_start(std::chrono::system_clock::now()), m_message("")
   {
   }
 
-public:
-  static void start(std::string message);
-  static void end(std::string message);
+  void start(std::string message);
+  void end();
 
   ~Timer()
   {
