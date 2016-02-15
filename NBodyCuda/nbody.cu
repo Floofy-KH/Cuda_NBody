@@ -11,16 +11,13 @@
    -0.169087605
 */
 
-#include <chrono>
+#include "Timer.h"
+
 #include <cmath>
 #include <cstdlib>
 #include <iomanip>
-#include <iostream>
 
 using type = double;
-using time_point = std::chrono::system_clock::time_point;
-
-static time_point start, end, diff;
 
 const type pi{3.141592653589793};
 const type solar_mass{4 * pi * pi};
@@ -187,7 +184,7 @@ int main(int argc, char ** argv)
     init_random_bodies(nbodies, bodies);
   }
 
-  auto t1 = std::chrono::steady_clock::now();
+  Timer::start("Main");
   offset_momentum(nbodies, bodies);
   type e1 = energy(nbodies, bodies);
   scale_bodies(nbodies, bodies, DT);
@@ -197,13 +194,10 @@ int main(int argc, char ** argv)
   scale_bodies(nbodies, bodies, RECIP_DT);
 
   type e2 = energy(nbodies, bodies);
-  auto t2 = std::chrono::steady_clock::now();
-  auto diff = t2 - t1;
 
   std::cout << std::setprecision(9);
   std::cout << e1 << '\n' << e2 << '\n';
-  std::cout << std::fixed << std::setprecision(3);
-  std::cout << std::chrono::duration<double>(diff).count() << " seconds.\n";
+  Timer::end("Main");
 
   if (argc != 1) { delete [] bodies; }
   return 0;
