@@ -30,10 +30,60 @@ struct planet {
   T mass;
 };
 
+/*template <typename T>
+__device__ void advanceVelocities(planet<T> *planets, int nBodies)
+{
+  int i = threadIdx.x + blockIdx.x*blockDim.x;
+  int j = threadIdx.y + blockIdx.y*blockDim.y;
+
+  if (i < nBodies && j < nBodies)
+  {
+    planet<T> &b = planets[i];
+    planet<T> &b2 = planets[j];
+    T dx = b.x - b2.x;
+    T dy = b.y - b2.y;
+    T dz = b.z - b2.z;
+    T inv_distance = 1.0 / sqrt(dx * dx + dy * dy + dz * dz);
+    T mag = inv_distance * inv_distance * inv_distance;
+    b.vx -= dx * b2.mass * mag;
+    b.vy -= dy * b2.mass * mag;
+    b.vz -= dz * b2.mass * mag;
+    b2.vx += dx * b.mass  * mag;
+    b2.vy += dy * b.mass  * mag;
+    b2.vz += dz * b.mass  * mag;
+  }
+}*/
+
+template <typename T>
+__device__ void advancePositions(planet<T> *planets, int nBodies)
+{
+  int i = threadIdx.x + blockIdx.x*blockDim.x;
+
+  if (i < nBodies)
+  {
+    planet<T> &b = planets[i];
+    b.x += b.vx;
+    b.y += b.vy;
+    b.z += b.vz;
+  }
+}
+
+template <typename T>
+void advance_gpued(int nBodies, planet<T> *bodies)
+{
+  Timer timer; timer.start("advance");
+  
+  //Advance velocities
+
+  //Advance positions
+
+  timer.end();
+}
+
 template <typename T>
 void advance(int nbodies, planet<T> *bodies)
 {
-  //Timer::start("advance");
+  Timer timer; timer.start("advance");
   int i, j;
 
   for (i = 0; i < nbodies; ++i) {
@@ -59,7 +109,7 @@ void advance(int nbodies, planet<T> *bodies)
     b.y += b.vy;
     b.z += b.vz;
   }
-  //Timer::end("advance");
+  timer.end();
 }
 
 template <typename T>
@@ -186,6 +236,9 @@ int main(int argc, char ** argv)
 
   std::cout << "niters=" << niters << " nbodies=" << nbodies << '\n';
 
+  std::ofstream outStream("outputTimes.csv");
+  Timer::setFileStream(&outStream);
+
   planet<type> *bodies;
   if (argc == 1) { 
     bodies = golden_bodies; // Check accuracy with 1000 solar system iterations
@@ -212,5 +265,6 @@ int main(int argc, char ** argv)
   timerMain.end();
 
   if (argc != 1) { delete [] bodies; }
+  outStream.close();
   return 0;
 }
